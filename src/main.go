@@ -3,10 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
 	"./indicator"
+)
+
+var (
+	//logger = log.New(&bytes.Buffer{}, "logger: ", log.Ldate)
+	logger = log.New(os.Stdout, "logger: ", log.Ldate)
 )
 
 func main() {
@@ -27,14 +33,14 @@ func main() {
 
 	// System variables
 	var consecutive int
-	var cycleCount int
+	var currentCycle int
 	firstBallNumber := 1
 	prevBallNumber := firstBallNumber
 
 	queue := make(chan indicator.Ball, ballCount)
-	hour := indicator.New("Hour", 12, queue, queue)
-	fiveMin := indicator.New("Five", 12, queue, hour.Track)
-	min := indicator.New("Min", 5, queue, fiveMin.Track)
+	hour := indicator.New("Hour", 11, queue, queue)
+	fiveMin := indicator.New("Five", 11, queue, hour.Track)
+	min := indicator.New("Min", 4, queue, fiveMin.Track)
 
 	// Run the indicators
 	min.Run()
@@ -43,21 +49,21 @@ func main() {
 
 	// Push inital balls to bottom queue
 	for i := firstBallNumber; i < (firstBallNumber + ballCount); i++ {
-		fmt.Printf("pushing ball %d to the queue\n", i)
+		logger.Printf("pushing ball %d to the queue\n", i)
 		queue <- indicator.Ball{i}
 	}
 
+	// Start the timer
+	start := time.Now().UTC()
+
 	// Every minute, send a ball to the minute indicator
-
 	for {
-		time.Sleep(slowdown * time.Millisecond)
-
 		// Grab the next ball from the queue
 		i := <-queue
 
 		// Check to notice if this ball is in the original order with the previous one
 		if i.Number == prevBallNumber+1 {
-			fmt.Printf("++\n")
+			logger.Printf("++\n")
 			consecutive++
 		} else {
 			consecutive = 0
@@ -66,13 +72,21 @@ func main() {
 		prevBallNumber = i.Number
 
 		if consecutive == ballCount-1 {
-			fmt.Printf("--------- Cycle %d started ---------\n", cycleCount)
-			cycleCount++
+			currentCycle++
+			logger.Printf("--------- Cycle %d started ---------\n", currentCycle)
+			if currentCycle == 2 {
+				runTime := time.Since(start)
+				fmt.Printf("%d balls cycle after %d days\n", ballCount, (hour.Cycles / 2))
+				fmt.Printf("Completed in %d milliseconds (%.3f seconds)\n", runTime/time.Millisecond, (float64(runTime) / float64(time.Second)))
+				os.Exit(0)
+			}
 			consecutive = 0
 			prevBallNumber = firstBallNumber
 		}
 
 		// Send this ball to the first indicator
 		min.Track <- i
+
+		time.Sleep(slowdown * time.Millisecond)
 	}
 }

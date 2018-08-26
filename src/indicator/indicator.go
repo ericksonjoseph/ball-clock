@@ -1,12 +1,15 @@
 package indicator
 
 import (
-	"fmt"
+	"log"
+	"os"
 	"time"
 )
 
 var (
 	slowdown time.Duration = 0
+	//logger                 = log.New(&bytes.Buffer{}, "logger: ", log.Ldate)
+	logger = log.New(os.Stdout, "logger: ", log.Ldate)
 )
 
 type Ball struct {
@@ -27,19 +30,21 @@ func (s stack) pop() (stack, Ball) {
 type indicator struct {
 	Name     string
 	Track    chan Ball // Incoming balls from the queue
+	Cycles   int       // Keeps track of how many times this indicator breached its capacity
 	queue    chan Ball // Channel to release balls to bottom queue
 	carry    chan Ball // Channel to carry last ball to next indicator
-	stack    stack
+	stack    stack     // Stack of ball-bearings indicating the time
 	capacity int
 }
 
 func New(name string, cap int, queue, carry chan Ball) indicator {
 
-	fmt.Println("creating new indicator")
+	logger.Println("creating new indicator")
 
 	return indicator{
 		name,
 		make(chan Ball),
+		0,
 		queue,
 		carry,
 		stack{},
@@ -52,16 +57,18 @@ func (i indicator) Run() {
 
 		for {
 
-			fmt.Println(".")
+			logger.Println(".")
 
 			ball := <-i.Track
 			i.stack = i.stack.push(ball)
-			fmt.Printf("Indicator %s <---  %+v. Current count: %d\n", i.Name, ball, len(i.stack))
+			logger.Printf("Indicator %s <---  %+v. Current count: %d\n", i.Name, ball, len(i.stack))
 
-			if len(i.stack) >= i.capacity {
+			if len(i.stack) > i.capacity {
+
+				i.Cycles++
 
 				var ballToCarry Ball
-				fmt.Printf("%s Full !!\n", i.Name)
+				logger.Printf("%s Full !!\n", i.Name)
 				time.Sleep(slowdown * time.Millisecond)
 
 				i.stack, ballToCarry = i.stack.pop()
@@ -69,12 +76,12 @@ func (i indicator) Run() {
 				for len(i.stack) > 0 {
 					var ballToRelease Ball
 					i.stack, ballToRelease = i.stack.pop()
-					fmt.Printf("%s Releasing ball %d\n", i.Name, ballToRelease.Number)
+					logger.Printf("%s Releasing ball %d\n", i.Name, ballToRelease.Number)
 					i.queue <- ballToRelease
 					time.Sleep(slowdown * time.Millisecond)
 				}
 
-				fmt.Printf("%s Carrying ball %d to next indicator\n", i.Name, ballToCarry.Number)
+				logger.Printf("%s Carrying ball %d to next indicator\n", i.Name, ballToCarry.Number)
 				i.carry <- ballToCarry
 			}
 		}
