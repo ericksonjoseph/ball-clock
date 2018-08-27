@@ -2,12 +2,6 @@
 
 const log = require('../logger.js');
 
-class Ball {
-    constructor(n) {
-        this.Number = n
-    }
-}
-
 module.exports = class indicator {
     constructor(name, cap, queue, carry) {
         this.Name = name
@@ -33,7 +27,7 @@ module.exports = class indicator {
         }
 
         this.stack.push(ball)
-        log.debug("Indicator " + this.Name + " <---  Ball(" + ball.Number + ") Current count: " + this.stack.length + "\n")
+        log.debug("Indicator " + this.Name + " <---  Ball(" + ball + ") Current count: " + this.stack.length + "\n")
 
         if (this.stack.length > this.capacity) {
 
@@ -47,11 +41,11 @@ module.exports = class indicator {
             while (this.stack.length > 0)  {
                 var ballToRelease = null;
                 ballToRelease = this.stack.pop()
-                log.debug(this.Name + " Releasing ball " + ballToRelease.Number)
+                log.debug(this.Name + " Releasing ball " + ballToRelease)
                 this.queue.push(ballToRelease)
             }
 
-            log.debug(this.Name + " Carrying ball %d to next indicator" + ballToCarry.Number)
+            log.debug(this.Name + " Carrying ball %d to next indicator" + ballToCarry)
             this.carry.push(ballToCarry)
         }
     }

@@ -10,11 +10,12 @@ function main() {
     let minutes = parseInt(process.argv[3]) || 0
 
     if (ballCount < 27 || ballCount > 127) {
-        log.error("Ball count must be in the range of 27 to 127. %d given\n", ballCount)
+        log.error("Ball count must be in the range of 27 to 127. %d given", ballCount)
         process.exit(1)
     }
 
     // System variables
+    var mintuesElapsed = 0;
     var consecutive = 0;
     var currentCycle = 0;
     let firstBallNumber = 1
@@ -28,43 +29,36 @@ function main() {
 
     // Push inital balls to bottom queue
     for (let i = firstBallNumber; i < (firstBallNumber + ballCount); i++) {
-        log.debug("pushing ball %d to the queue\n", i)
-        queue.push(indicator.Ball(i))
+        log.debug("pushing ball %d to the queue", i)
+        queue.push(i)
     }
 
     // Every minute, send a ball to the minute indicator
     while(true) {
 
-        // Run the indicators
-        min.Run()
-        fiveMin.Run()
-        hour.Run()
-
         // Grab the next ball from the queue
         let i = queue.shift()
         if (i === undefined) {
-            console.log("Queue empty")
+            console.log("Queue empty. Deadlock!")
             process.exit(2)
             continue
         }
 
         // Check to notice if this ball is in the original order with the previous one
-        if (i.Number == prevBallNumber+1) {
-            log.debug("++\n")
+        if (i == prevBallNumber+1) {
+            log.debug("++")
             consecutive++
         } else {
             consecutive = 0
         }
 
-        prevBallNumber = i.Number
+        prevBallNumber = i
 
         if (consecutive == ballCount-1) {
             currentCycle++
-            log.debug("--------- Cycle %d started ---------\n", currentCycle)
-            if (currentCycle == 2) {
-                log.info("%d balls cycle after %d days\n", ballCount, hour.Cycles / 2)
-                log.info("Completed in %d milliseconds (%.3f seconds)\n")
-                process.exit(0)
+            log.debug("Cycle %d started", currentCycle)
+            if (currentCycle == 2 && !minutes) {
+                break;
             }
             consecutive = 0
             prevBallNumber = firstBallNumber
@@ -72,7 +66,26 @@ function main() {
 
         // Send this ball to the first indicator
         min.Track.push(i)
+
+        // Run the indicators
+        min.Run()
+        fiveMin.Run()
+        hour.Run()
+
+        mintuesElapsed++
+        if (minutes && minutes === mintuesElapsed) {
+            log.info({
+                "Min": min.stack, 
+                "FiveMin": fiveMin.stack, 
+                "Hour": hour.stack, 
+                "Main": queue, 
+            })
+            process.exit(1)
+        }
     }
+
+    log.info("%d balls cycle after %d days", ballCount, hour.Cycles / 2)
+    log.info("Completed in %d milliseconds (%.3f seconds)")
 }
 
 main();
