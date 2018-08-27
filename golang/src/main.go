@@ -1,10 +1,10 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"./indicator"
@@ -18,20 +18,12 @@ var (
 func main() {
 
 	// User defined
-	ballCountArg := flag.Int("c", 27, "ball count")
-	timeArg := flag.Int64("t", 60000, "Milliseconds to consider 1 min")
+	ballCount, err := strconv.Atoi(os.Args[1])
 
-	flag.Parse()
-
-	ballCount := *ballCountArg
-	slowdown := time.Duration(*timeArg)
-
-	/*
-		if ballCount < 27 || ballCount > 127 {
-			fmt.Printf("Ball count must be in the range of 27 to 127. %d given\n", ballCount)
-			os.Exit(1)
-		}
-	*/
+	if err != nil || ballCount < 27 || ballCount > 127 {
+		fmt.Printf("Ball count must be in the range of 27 to 127. %d given\n", ballCount)
+		os.Exit(1)
+	}
 
 	// System variables
 	var consecutive int
@@ -39,20 +31,15 @@ func main() {
 	firstBallNumber := 1
 	prevBallNumber := firstBallNumber
 
-	queue := make(chan indicator.Ball, ballCount)
-	hour := indicator.New("Hour", 1, queue, queue)
-	fiveMin := indicator.New("Five", 1, queue, hour.Track)
-	min := indicator.New("Min", 4, queue, fiveMin.Track)
-
-	// Run the indicators
-	min.Run()
-	fiveMin.Run()
-	hour.Run()
+	queue := indicator.NewQueue(ballCount)
+	hour := indicator.New("Hour", 11, queue, queue)
+	fiveMin := indicator.New("Five", 11, queue, hour)
+	min := indicator.New("Min", 4, queue, fiveMin)
 
 	// Push inital balls to bottom queue
 	for i := firstBallNumber; i < (firstBallNumber + ballCount); i++ {
 		logger.Printf("pushing ball %d to the queue\n", i)
-		queue <- indicator.Ball{i}
+		queue.Push(indicator.Ball{i})
 	}
 
 	// Start the timer
@@ -61,7 +48,7 @@ func main() {
 	// Every minute, send a ball to the minute indicator
 	for {
 		// Grab the next ball from the queue
-		i := <-queue
+		i := queue.Next()
 
 		// Check to notice if this ball is in the original order with the previous one
 		if i.Number == prevBallNumber+1 {
@@ -87,8 +74,11 @@ func main() {
 		}
 
 		// Send this ball to the first indicator
-		min.Track <- i
+		min.Push(i)
 
-		time.Sleep(slowdown * time.Millisecond)
+		// Run the indicators
+		min.Run()
+		fiveMin.Run()
+		hour.Run()
 	}
 }
