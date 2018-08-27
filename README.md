@@ -1,4 +1,11 @@
 ## Usage
-`go run src/main.go -c 27`  
--t = Time factor. Default 60000 (milliseconds that will equal one minute)  
--c = Count of Ball Bearings. Default 27
+
+### Golang implementation
+`./ball-clock 30`  
+`./ball-clock 45`  
+`./ball-clock 30 325`  
+
+### NodeJS implementation
+`node node/src/main.js 30`  
+`node node/src/main.js 45`  
+`node node/src/main.js 30 325`  
