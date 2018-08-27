@@ -9,7 +9,7 @@ function main() {
     let ballCount = parseInt(process.argv[2]) || 0
     let minutes = parseInt(process.argv[3]) || 0
 
-    if (ballCount < 27 || ballCount > 127) {
+    if (ballCount < 27 || ballCount > 100027) {
         log.error("Ball count must be in the range of 27 to 127. %d given", ballCount)
         process.exit(1)
     }
@@ -32,6 +32,10 @@ function main() {
         log.debug("pushing ball %d to the queue", i)
         queue.push(i)
     }
+
+    // Start the timer
+    let start = Date.now();
+    let end = 0
 
     // Every minute, send a ball to the minute indicator
     while(true) {
@@ -58,6 +62,7 @@ function main() {
             currentCycle++
             log.debug("Cycle %d started", currentCycle)
             if (currentCycle == 2 && !minutes) {
+                end = Date.now();
                 break;
             }
             consecutive = 0
@@ -84,8 +89,10 @@ function main() {
         }
     }
 
+    let diff = end - start
+
     log.info("%d balls cycle after %d days", ballCount, hour.Cycles / 2)
-    log.info("Completed in %d milliseconds (%.3f seconds)")
+    log.info("Completed in %d milliseconds (%d seconds)", diff, Number.parseFloat((diff / 1000)).toFixed(3))
 }
 
 main();
