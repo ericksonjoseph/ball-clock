@@ -9,7 +9,7 @@ function main() {
     let ballCount = parseInt(process.argv[2]) || 0
     let minutes = parseInt(process.argv[3]) || 0
 
-    if (ballCount < 27 || ballCount > 100027) {
+    if (ballCount < 27 || ballCount > 127) {
         log.error("Ball count must be in the range of 27 to 127. %d given", ballCount)
         process.exit(1)
     }
@@ -45,16 +45,10 @@ function main() {
         if (i === undefined) {
             console.log("Queue empty. Deadlock!")
             process.exit(2)
-            continue
         }
 
         // Check to notice if this ball is in the original order with the previous one
-        if (i == prevBallNumber+1) {
-            log.debug("++")
-            consecutive++
-        } else {
-            consecutive = 0
-        }
+        consecutive = (i == prevBallNumber+1) ?  consecutive+1 : 0
 
         prevBallNumber = i
 
@@ -78,13 +72,9 @@ function main() {
         hour.Run()
 
         mintuesElapsed++
+
         if (minutes && minutes === mintuesElapsed) {
-            log.info({
-                "Min": min.stack, 
-                "FiveMin": fiveMin.stack, 
-                "Hour": hour.stack, 
-                "Main": queue, 
-            })
+            log.info({ "Min": min.stack, "FiveMin": fiveMin.stack, "Hour": hour.stack, "Main": queue, })
             process.exit(1)
         }
     }

@@ -26,10 +26,12 @@ func main() {
 	ballCount := *ballCountArg
 	slowdown := time.Duration(*timeArg)
 
-	if ballCount < 27 || ballCount > 127 {
-		fmt.Printf("Ball count must be in the range of 27 to 127. %d given\n", ballCount)
-		os.Exit(1)
-	}
+	/*
+		if ballCount < 27 || ballCount > 127 {
+			fmt.Printf("Ball count must be in the range of 27 to 127. %d given\n", ballCount)
+			os.Exit(1)
+		}
+	*/
 
 	// System variables
 	var consecutive int
@@ -38,8 +40,8 @@ func main() {
 	prevBallNumber := firstBallNumber
 
 	queue := make(chan indicator.Ball, ballCount)
-	hour := indicator.New("Hour", 11, queue, queue)
-	fiveMin := indicator.New("Five", 11, queue, hour.Track)
+	hour := indicator.New("Hour", 1, queue, queue)
+	fiveMin := indicator.New("Five", 1, queue, hour.Track)
 	min := indicator.New("Min", 4, queue, fiveMin.Track)
 
 	// Run the indicators
