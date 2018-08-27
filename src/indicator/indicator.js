@@ -1,16 +1,11 @@
 'use strict'
 
 const log = require('../logger.js');
-const slowdown = 0
 
 class Ball {
     constructor(n) {
         this.Number = n
     }
-}
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 module.exports = class indicator {
@@ -46,7 +41,6 @@ module.exports = class indicator {
 
             let ballToCarry = null;
             log.debug(this.Name + " Full !!\n")
-            sleep(slowdown)
 
             ballToCarry = this.stack.pop()
 
@@ -55,7 +49,6 @@ module.exports = class indicator {
                 ballToRelease = this.stack.pop()
                 log.debug(this.Name + " Releasing ball " + ballToRelease.Number)
                 this.queue.push(ballToRelease)
-                sleep(slowdown)
             }
 
             log.debug(this.Name + " Carrying ball %d to next indicator" + ballToCarry.Number)

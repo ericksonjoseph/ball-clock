@@ -15,7 +15,7 @@ module.exports = class Logger {
   }
 
   static debug () {
-    LOG.debug.apply(LOG, arguments)
+    //LOG.debug.apply(LOG, arguments)
   }
 
   static info () {
